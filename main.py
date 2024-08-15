@@ -4,8 +4,15 @@ from termcolor import colored
 
 # Baca token dari file auth.txt
 def read_auth_tokens(filename='auth.txt'):
-    with open(filename, 'r') as file:
-        return [line.strip() for line in file if line.strip()]
+    try:
+        with open(filename, 'r') as file:
+            tokens = [line.strip() for line in file if line.strip()]
+            if not tokens:
+                print(colored("No tokens found in auth.txt!", 'red'))
+            return tokens
+    except FileNotFoundError:
+        print(colored(f"File {filename} not found!", 'red'))
+        return []
 
 # Function to make the POST request to claim daily points
 def claim_daily_points(headers):
@@ -35,21 +42,30 @@ def display_account_data(data):
 
 # Main execution loop for multiple accounts
 def main():
-    tokens = read_auth_tokens()
-    for token in tokens:
-        headers = {"Authorization": f"Bearer {token}"}
+    while True:
+        tokens = read_auth_tokens()
+        if not tokens:
+            return  # Exit if no tokens are found
         
-        # Claim daily points
-        print(colored("\n=== Processing Account ===", 'magenta'))
-        claim_daily_points(headers)
-        
-        # Get and display account data
-        account_data = get_account_data(headers)
-        if account_data:
-            display_account_data(account_data)
-        
-        print(colored("\nWaiting 24 hours before the next claim...\n", 'blue'))
-        time.sleep(86400)  # Wait for 24 hours
+        for token in tokens:
+            headers = {"Authorization": f"Bearer {token}"}
+            
+            # Claim daily points
+            print(colored("\n=== Processing Account ===", 'magenta'))
+            claim_daily_points(headers)
+            
+            # Get and display account data
+            account_data = get_account_data(headers)
+            if account_data:
+                display_account_data(account_data)
+            
+            # Pause before processing the next token
+            print(colored("\nPausing for 10 seconds before processing the next account...\n", 'blue'))
+            time.sleep(10)
+
+        # Pause for 13 hours before repeating the process
+        print(colored("\nAll accounts processed. Pausing for 13 hours before starting again...\n", 'blue'))
+        time.sleep(46800)  # 13 hours in seconds
 
 if __name__ == "__main__":
     main()
